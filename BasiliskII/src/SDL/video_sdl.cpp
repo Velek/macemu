@@ -63,7 +63,6 @@
 #include "video_blit.h"
 #include "vm_alloc.h"
 
-#define DEBUG 0
 #include "debug.h"
 
 // Supported video modes

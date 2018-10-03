@@ -29,7 +29,6 @@
 #include <SDL_mutex.h>
 #include <SDL_audio.h>
 
-#define DEBUG 0
 #include "debug.h"
 
 #if defined(BINCUE)

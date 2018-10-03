@@ -58,7 +58,6 @@ extern void flush_icache_range(uint8 *start, uint32 size); // from compemu_suppo
 # include "mon.h"
 #endif
 
-#define DEBUG 0
 #include "debug.h"
 
 

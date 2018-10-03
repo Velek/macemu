@@ -23,7 +23,6 @@
 #ifndef _DUMP_H_
 #define _DUMP_H_
 
-#define DEBUG 0
 
 void dump_bytes( uint8 *packet, int length );
 

@@ -42,7 +42,6 @@ using std::vector;
 #include "prefs.h"
 #include "disk.h"
 
-#define DEBUG 0
 #include "debug.h"
 
 

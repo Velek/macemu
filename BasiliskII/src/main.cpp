@@ -39,7 +39,6 @@
 #include "prefs.h"
 #include "main.h"
 
-#define DEBUG 0
 #include "debug.h"
 
 #if ENABLE_MON

@@ -40,7 +40,6 @@ using std::min;
 #include "cdenable/cache.h"
 #include "cdenable/eject_nt.h"
 
-#define DEBUG 0
 #include "debug.h"
 
 

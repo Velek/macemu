@@ -45,7 +45,6 @@
 #define USE_SLIRP_TIMEOUT 1
 
 
-#define DEBUG 0
 #define MONITOR 0
 
 #if DEBUG

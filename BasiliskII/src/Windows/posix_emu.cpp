@@ -105,7 +105,6 @@ static void extfs_log_write( char *s )
 }
 #else
 
-#define DEBUG 0
 #include "debug.h"
 
 #endif // DEBUG_EXTFS

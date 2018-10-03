@@ -39,7 +39,6 @@
 
 #include "rom_patches.h"
 
-#define DEBUG 0
 #include "debug.h"
 
 

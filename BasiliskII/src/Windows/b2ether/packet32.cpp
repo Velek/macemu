@@ -60,7 +60,6 @@ typedef unsigned long ULONG_PTR, *PULONG_PTR;
 #endif
 
 #define DEBUG_PACKETS 0
-#define DEBUG 0
 #include "debug.h"
 
 #ifdef __cplusplus

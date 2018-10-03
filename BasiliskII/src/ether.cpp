@@ -31,12 +31,18 @@
 #include <map>
 
 #if SUPPORTS_UDP_TUNNEL
+#ifdef WIN32
+#include <winsock.h>
+#include <winioctl.h>
+#include <WS2tcpip.h>
+#else
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
+#endif
 #endif
 
 #include "cpu_emulation.h"
@@ -51,13 +57,12 @@
 using std::map;
 #endif
 
-#define DEBUG 0
 #include "debug.h"
 
 #define MONITOR 0
 
 
-#ifdef __BEOS__
+#if  defined(__BEOS__) || defined(_WINDOWS)
 #define CLOSESOCKET closesocket
 #else
 #define CLOSESOCKET close
@@ -88,7 +93,7 @@ void EtherInit(void)
 	net_open = false;
 	udp_tunnel = false;
 
-#if SUPPORTS_UDP_TUNNEL
+#ifdef SUPPORTS_UDP_TUNNEL
 	// UDP tunnelling requested?
 	if (PrefsFindBool("udptunnel")) {
 		udp_tunnel = true;
@@ -141,8 +146,12 @@ void EtherInit(void)
 #ifdef __BEOS__
 		setsockopt(udp_socket, SOL_SOCKET, SO_NONBLOCK, &on, sizeof(on));
 #else
-		setsockopt(udp_socket, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on));
+		setsockopt(udp_socket, SOL_SOCKET, SO_BROADCAST, (const char *)&on, sizeof(on));
+#if defined(_WINDOWS)
+		ioctlsocket(udp_socket, FIONBIO, (u_long *)&on);
+#else
 		ioctl(udp_socket, FIONBIO, &on);
+#endif
 #endif
 
 		// Start thread for packet reception
@@ -347,7 +356,7 @@ int16 EtherControl(uint32 pb, uint32 dce)
 					sa.sin_family = AF_INET;
 					sa.sin_addr.s_addr = htonl(dest_ip);
 					sa.sin_port = htons(udp_port);
-					if (sendto(udp_socket, packet, len, 0, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
+					if (sendto(udp_socket, (const char *)packet, len, 0, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
 						D(bug("WARNING: Couldn't transmit packet\n"));
 						return excessCollsns;
 					}

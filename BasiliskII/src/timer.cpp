@@ -32,7 +32,6 @@
 #include "macos_util.h"
 #include "timer.h"
 
-#define DEBUG 0
 #include "debug.h"
 
 

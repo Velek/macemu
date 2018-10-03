@@ -29,7 +29,6 @@
 #include "main.h"
 #include "emul_op.h"
 
-#define DEBUG 0
 #include "debug.h"
 
 #ifndef NO_STD_NAMESPACE

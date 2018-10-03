@@ -31,7 +31,6 @@
 #include <errno.h>
 
 
-#define DEBUG 0
 #include "debug.h"
 
 

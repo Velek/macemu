@@ -27,7 +27,6 @@
 #include "cdrom.h"
 #include "macos_util.h"
 
-#define DEBUG 0
 #include "debug.h"
 
 
@@ -131,7 +130,35 @@ uint32 TimeToMacTime(time_t t)
 	// This code is taken from glibc 2.2
 
 	// Convert to number of seconds elapsed since 1-Jan-1904
+	struct tm hacklocal;
+#ifdef WIN32
+	struct tm *local = &hacklocal;
+	
+	errno_t e = _localtime64_s(&hacklocal, (const time_t *)&t);
+
+	if (e != 0) {
+		hacklocal.tm_year = 70;
+		hacklocal.tm_sec = 0;
+		hacklocal.tm_min = 0;
+		hacklocal.tm_hour = 0;
+		hacklocal.tm_yday = 0;
+	}
+#else
+	/*  
+		FIXME: The 64 bit Y2k compliant version of this function is different among different 
+		flavors of Unix.  This is just here to make it not crash.  Feel free to fix it right
+		if you have the environment set up.
+	*/
 	struct tm *local = localtime(&t);
+	if (local == NULL) {
+		local = &hacklocal;
+		hacklocal.tm_year = 70;
+		hacklocal.tm_sec = 0;
+		hacklocal.tm_min = 0;
+		hacklocal.tm_hour = 0;
+		hacklocal.tm_yday = 0;
+	}
+#endif
 	const int TM_EPOCH_YEAR = 1900;
 	const int MAC_EPOCH_YEAR = 1904;
 	int a4 = ((local->tm_year + TM_EPOCH_YEAR) >> 2) - !(local->tm_year & 3);

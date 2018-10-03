@@ -32,7 +32,6 @@
 #include "audio.h"
 #include "audio_defs.h"
 
-#define DEBUG 0
 #include "debug.h"
 
 
@@ -579,10 +578,7 @@ int16 SoundInControl(uint32 pb, uint32 dce)
 	uint32 selector = param[0];
 	D(bug(" selector %c%c%c%c\n", selector >> 24, selector >> 16, selector >> 8, selector));
 
-	switch (selector) {
-		default:
-			return -231;	// siUnknownInfoType
-	}
+	return -231;	// siUnknownInfoType
 }
 
 

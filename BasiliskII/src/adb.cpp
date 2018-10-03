@@ -38,7 +38,6 @@
 #include "thunks.h"
 #endif
 
-#define DEBUG 0
 #include "debug.h"
 
 

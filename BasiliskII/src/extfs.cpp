@@ -65,7 +65,6 @@
 # include "posix_emu.h"
 #endif
 
-#define DEBUG 0
 #include "debug.h"
 
 
