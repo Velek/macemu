@@ -295,6 +295,7 @@ int main(int argc, char **argv)
 	sdl_flags |= SDL_INIT_AUDIO;
 #endif
 	assert(sdl_flags != 0);
+    
 	if (SDL_Init(sdl_flags) == -1) {
 		char str[256];
 		sprintf(str, "Could not initialize SDL: %s.\n", SDL_GetError());
@@ -302,6 +303,14 @@ int main(int argc, char **argv)
 		QuitEmulator();
 	}
 	atexit(SDL_Quit);
+
+    intflag_lock = SDL_CreateMutex();
+	if (intflag_lock == NULL) {
+		char str[256];
+		sprintf(str, "Could not create interrupt muutex");
+		ErrorAlert(str);
+		QuitEmulator();
+	}
 
 	// Init system routines
 	SysInit();
