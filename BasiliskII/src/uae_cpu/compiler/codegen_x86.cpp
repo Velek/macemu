@@ -29,6 +29,9 @@
    only target, and it's easier this way... */
 
 #include "flags_x86.h"
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 /*************************************************************************
  * Some basic information about the the target CPU                       *
