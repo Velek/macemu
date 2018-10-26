@@ -55,8 +55,86 @@
 
 void EmulOp(uint16 opcode, M68kRegisters *r)
 {
-	D(bug("EmulOp %04x\n", opcode));
+//	D(bug("EmulOp %04x\n", opcode));
 	switch (opcode) {
+		case M68K_EMUL_OP_IRQ:			// Level 1 interrupt
+			r->d[0] = 0;
+
+			if (InterruptFlags & INTFLAG_60HZ) {
+				ClearInterruptFlag(INTFLAG_60HZ);
+
+				// Increment Ticks variable
+				WriteMacInt32(0x16a, ReadMacInt32(0x16a) + 1);
+
+				if (HasMacStarted()) {
+
+					// Mac has started, execute all 60Hz interrupt functions
+					TimerInterrupt();
+					VideoInterrupt();
+
+					// Call DoVBLTask(0)
+					if (ROMVersion == ROM_VERSION_32) {
+						M68kRegisters r2;
+						r2.d[0] = 0;
+						Execute68kTrap(0xa072, &r2);
+					}
+
+					r->d[0] = 1;			// Flag: 68k interrupt routine executes VBLTasks etc.
+				}
+			}
+
+			if (InterruptFlags & INTFLAG_1HZ) {
+				ClearInterruptFlag(INTFLAG_1HZ);
+				if (HasMacStarted()) {
+					SonyInterrupt();
+					DiskInterrupt();
+					CDROMInterrupt();
+				}
+			}
+
+			if (InterruptFlags & INTFLAG_SERIAL) {
+				ClearInterruptFlag(INTFLAG_SERIAL);
+				SerialInterrupt();
+			}
+
+			if (InterruptFlags & INTFLAG_ETHER) {
+				ClearInterruptFlag(INTFLAG_ETHER);
+				EtherInterrupt();
+			}
+
+			if (InterruptFlags & INTFLAG_AUDIO) {
+				ClearInterruptFlag(INTFLAG_AUDIO);
+				AudioInterrupt();
+			}
+
+			if (InterruptFlags & INTFLAG_ADB) {
+				ClearInterruptFlag(INTFLAG_ADB);
+				if (HasMacStarted()) {
+					ADBInterrupt();
+				}
+			}
+
+			if (InterruptFlags & INTFLAG_NMI) {
+				ClearInterruptFlag(INTFLAG_NMI);
+				if (HasMacStarted())
+					TriggerNMI();
+			}
+			break;
+
+		case M68K_EMUL_OP_BLOCK_MOVE:		// BlockMove() cache flushing
+			FlushCodeCache(Mac2HostAddr(r->a[0]), r->a[1]);
+			break;
+
+#if SUPPORTS_EXTFS
+		case M68K_EMUL_OP_EXTFS_COMM:		// External file system routines
+			WriteMacInt16(r->a[7] + 14, ExtFSComm(ReadMacInt16(r->a[7] + 12), ReadMacInt32(r->a[7] + 8), ReadMacInt32(r->a[7] + 4)));
+			break;
+
+		case M68K_EMUL_OP_EXTFS_HFS:
+			WriteMacInt16(r->a[7] + 20, ExtFSHFS(ReadMacInt32(r->a[7] + 16), ReadMacInt16(r->a[7] + 14), ReadMacInt32(r->a[7] + 10), ReadMacInt32(r->a[7] + 6), ReadMacInt16(r->a[7] + 4)));
+			break;
+#endif
+
 		case M68K_EMUL_BREAK: {				// Breakpoint
 			printf("*** Breakpoint\n");
 			printf("d0 %08x d1 %08x d2 %08x d3 %08x\n"
@@ -440,69 +518,6 @@ void EmulOp(uint16 opcode, M68kRegisters *r)
 			break;
 		}
 
-		case M68K_EMUL_OP_IRQ:			// Level 1 interrupt
-			r->d[0] = 0;
-
-			if (InterruptFlags & INTFLAG_60HZ) {
-				ClearInterruptFlag(INTFLAG_60HZ);
-
-				// Increment Ticks variable
-				WriteMacInt32(0x16a, ReadMacInt32(0x16a) + 1);
-
-				if (HasMacStarted()) {
-
-					// Mac has started, execute all 60Hz interrupt functions
-					TimerInterrupt();
-					VideoInterrupt();
-
-					// Call DoVBLTask(0)
-					if (ROMVersion == ROM_VERSION_32) {
-						M68kRegisters r2;
-						r2.d[0] = 0;
-						Execute68kTrap(0xa072, &r2);
-					}
-
-					r->d[0] = 1;			// Flag: 68k interrupt routine executes VBLTasks etc.
-				}
-			}
-
-			if (InterruptFlags & INTFLAG_1HZ) {
-				ClearInterruptFlag(INTFLAG_1HZ);
-				if (HasMacStarted()) {
-					SonyInterrupt();
-					DiskInterrupt();
-					CDROMInterrupt();
-				}
-			}
-
-			if (InterruptFlags & INTFLAG_SERIAL) {
-				ClearInterruptFlag(INTFLAG_SERIAL);
-				SerialInterrupt();
-			}
-
-			if (InterruptFlags & INTFLAG_ETHER) {
-				ClearInterruptFlag(INTFLAG_ETHER);
-				EtherInterrupt();
-			}
-
-			if (InterruptFlags & INTFLAG_AUDIO) {
-				ClearInterruptFlag(INTFLAG_AUDIO);
-				AudioInterrupt();
-			}
-
-			if (InterruptFlags & INTFLAG_ADB) {
-				ClearInterruptFlag(INTFLAG_ADB);
-				if (HasMacStarted())
-					ADBInterrupt();
-			}
-
-			if (InterruptFlags & INTFLAG_NMI) {
-				ClearInterruptFlag(INTFLAG_NMI);
-				if (HasMacStarted())
-					TriggerNMI();
-			}
-			break;
-
 		case M68K_EMUL_OP_PUT_SCRAP: {		// PutScrap() patch
 			void *scrap = Mac2HostAddr(ReadMacInt32(r->a[7] + 4));
 			uint32 type = ReadMacInt32(r->a[7] + 8);
@@ -535,20 +550,6 @@ void EmulOp(uint16 opcode, M68kRegisters *r)
 
 		case M68K_EMUL_OP_AUDIO:			// Audio component dispatch function
 			r->d[0] = AudioDispatch(r->a[3], r->a[4]);
-			break;
-
-#if SUPPORTS_EXTFS
-		case M68K_EMUL_OP_EXTFS_COMM:		// External file system routines
-			WriteMacInt16(r->a[7] + 14, ExtFSComm(ReadMacInt16(r->a[7] + 12), ReadMacInt32(r->a[7] + 8), ReadMacInt32(r->a[7] + 4)));
-			break;
-
-		case M68K_EMUL_OP_EXTFS_HFS:
-			WriteMacInt16(r->a[7] + 20, ExtFSHFS(ReadMacInt32(r->a[7] + 16), ReadMacInt16(r->a[7] + 14), ReadMacInt32(r->a[7] + 10), ReadMacInt32(r->a[7] + 6), ReadMacInt16(r->a[7] + 4)));
-			break;
-#endif
-
-		case M68K_EMUL_OP_BLOCK_MOVE:		// BlockMove() cache flushing
-			FlushCodeCache(Mac2HostAddr(r->a[0]), r->a[1]);
 			break;
 
 		case M68K_EMUL_OP_DEBUGUTIL:
