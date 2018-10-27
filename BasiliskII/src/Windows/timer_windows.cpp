@@ -68,7 +68,7 @@ void timer_init(void)
 }
 
 
-  /*
+/*
  *  Return microseconds since boot (64 bit)
  */
 

@@ -84,8 +84,14 @@ static inline void _cdecl winbug(wchar_t *s, ...)
 	va_end(vargs);
 }
 #endif
+
+#ifdef NDEBUG
+#define bug printf
+#define wbug wprintf
+#else
 #define bug winbug
-#define wbug wwinbug
+#define wbug vwinbug
+#endif
 
 #elif defined(AMIGA)
 

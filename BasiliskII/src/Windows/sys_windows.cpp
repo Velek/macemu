@@ -421,7 +421,7 @@ void *Sys_open(const char *path_name, bool read_only)
 		_tcscat(name, TEXT("\\"));
 	name_len = _tcslen(name);
 
-	D(bug(TEXT("Sys_open(%s, %s)\n"), name, read_only ? TEXT("read-only") : TEXT("read/write")));
+	D(wbug(TEXT("Sys_open(%s, %s)\n"), name, read_only ? TEXT("read-only") : TEXT("read/write")));
 	if (name_len > 0 && name[name_len - 1] == TEXT('\\')) {
 		int type = GetDriveType(name);
 

@@ -171,7 +171,6 @@ void TimerReset(void)
 
 int16 InsTime(uint32 tm, uint16 trap)
 {
-	D(bug("InsTime %08lx, trap %04x\n", tm, trap));
 	WriteMacInt16(tm + qType, ReadMacInt16(tm + qType) & 0x1fff | (trap << 4) & 0x6000);
 	if (find_desc(tm) >= 0)
 		printf("WARNING: InsTime(): Task re-inserted\n");
@@ -190,8 +189,6 @@ int16 InsTime(uint32 tm, uint16 trap)
 
 int16 RmvTime(uint32 tm)
 {
-	D(bug("RmvTime %08lx\n", tm));
-
 	// Find descriptor
 	int i = find_desc(tm);
 	if (i < 0) {
@@ -201,7 +198,6 @@ int16 RmvTime(uint32 tm)
 
 	// Task active?
 	if (ReadMacInt16(tm + qType) & 0x8000) {
-
 		// Yes, make task inactive and remove it from the Time Manager queue
 		WriteMacInt16(tm + qType, ReadMacInt16(tm + qType) & 0x7fff);
 		dequeue_tm(tm);
@@ -211,9 +207,9 @@ int16 RmvTime(uint32 tm)
 		timer_current_time(current);
 		timer_sub_time(remaining, desc[i].wakeup, current);
 		WriteMacInt32(tm + tmCount, timer_host2mac_time(remaining));
-	} else
+    } else {
 		WriteMacInt32(tm + tmCount, 0);
-	D(bug(" tmCount %d\n", ReadMacInt32(tm + tmCount)));
+    }
 
 	// Free descriptor
 	free_desc(i);
@@ -227,8 +223,6 @@ int16 RmvTime(uint32 tm)
 
 int16 PrimeTime(uint32 tm, int32 time)
 {
-	D(bug("PrimeTime %08x, time %d\n", tm, time));
-
 	// Find descriptor
 	int i = find_desc(tm);
 	if (i < 0) {

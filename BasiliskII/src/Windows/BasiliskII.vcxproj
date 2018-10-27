@@ -185,6 +185,7 @@
     <ClInclude Include="..\include\sony.h" />
     <ClInclude Include="..\include\sys.h" />
     <ClInclude Include="..\include\timer.h" />
+    <ClInclude Include="..\include\toolbox_traps.h" />
     <ClInclude Include="..\include\user_strings.h" />
     <ClInclude Include="..\include\version.h" />
     <ClInclude Include="..\include\video.h" />
@@ -541,7 +542,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>HAVE_CONFIG_H;DIRECT_ADDRESSING;DEBUG=1;UNALIGNED_PROFITABLE;MSVC_INTRINSICS;OPTIMIZED_FLAGS;SAHF_SETO_PROFITABLE;FPU_IEEE;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H;DIRECT_ADDRESSING;UNALIGNED_PROFITABLE;MSVC_INTRINSICS;OPTIMIZED_FLAGS;SAHF_SETO_PROFITABLE;FPU_IEEE;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\include;..\uae_cpu;.;..\CrossPlatform;..\slirp;..\..\..\..\SDL-1.2.15\include</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)%(RelativeDir)</AssemblerListingLocation>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>

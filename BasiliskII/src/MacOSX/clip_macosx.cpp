@@ -116,7 +116,7 @@ void GetScrap(void **handle, uint32 type, int32 offset)
 		// Allocate space for new scrap in MacOS side
 		M68kRegisters r;
 		r.d[0] = byteCount;
-		Execute68kTrap(0xa71e, &r);				// NewPtrSysClear()
+		Execute68kTrap(ATRAP_NewPtrSysClear, &r);				// NewPtrSysClear()
 		uint32 scrap_area = r.a[0];
 
 		// Get the native clipboard data
@@ -136,7 +136,7 @@ void GetScrap(void **handle, uint32 type, int32 offset)
 					M68K_RTS >> 8, M68K_RTS & 0xff
 				};
 				r.d[0] = sizeof(proc);
-				Execute68kTrap(0xa71e, &r);		// NewPtrSysClear()
+                Execute68kTrap(ATRAP_NewPtrSysClear, &r);				// NewPtrSysClear()
 				uint32 proc_area = r.a[0];
 
 				if (proc_area) {
@@ -148,12 +148,12 @@ void GetScrap(void **handle, uint32 type, int32 offset)
 					Execute68k(proc_area, &r);
 
 					r.a[0] = proc_area;
-					Execute68kTrap(0xa01f, &r);	// DisposePtr
+					Execute68kTrap(ATRAP_DisposePtr, &r);	// DisposePtr
 				}
 			}
 
 			r.a[0] = scrap_area;
-			Execute68kTrap(0xa01f, &r);			// DisposePtr
+            Execute68kTrap(ATRAP_DisposePtr, &r);	// DisposePtr
 		}
 	}
 #endif

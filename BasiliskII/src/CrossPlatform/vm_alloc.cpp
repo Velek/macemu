@@ -374,6 +374,7 @@ int vm_release(void * addr, size_t size)
 
 int vm_protect(void * addr, size_t size, int prot)
 {
+	return 0;
 #ifdef HAVE_MACH_VM
 	int ret_code = vm_protect(mach_task_self(), (vm_address_t)addr, size, 0, prot);
 	return ret_code == KERN_SUCCESS ? 0 : -1;
@@ -384,6 +385,7 @@ int vm_protect(void * addr, size_t size, int prot)
 #else
 #ifdef HAVE_WIN32_VM
 	DWORD old_prot;
+
 	int ret_code = VirtualProtect(addr, size, translate_prot_flags(prot), &old_prot);
 	return ret_code != 0 ? 0 : -1;
 #else

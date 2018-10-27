@@ -67,6 +67,7 @@
 
 #include "debug.h"
 
+#include <toolbox_traps.h>
 
 // File system global data and 68k routines
 enum {
@@ -480,7 +481,7 @@ void InstallExtFS(void)
 
 	// FSM present?
 	r.d[0] = gestaltFSAttr;
-	Execute68kTrap(0xa1ad, &r);	// Gestalt()
+	Execute68kTrap(ATRAP_Gestalt, &r);	// Gestalt()
 	D(bug("FSAttr %d, %08x\n", r.d[0], r.a[0]));
 	if ((r.d[0] & 0xffff) || !(r.a[0] & (1 << gestaltHasFileSystemManager))) {
 		printf("WARNING: No FSM present, disabling ExtFS\n");
@@ -489,7 +490,7 @@ void InstallExtFS(void)
 
 	// Yes, version >=1.2?
 	r.d[0] = gestaltFSMVersion;
-	Execute68kTrap(0xa1ad, &r);	// Gestalt()
+	Execute68kTrap(ATRAP_Gestalt, &r);	// Gestalt()
 	D(bug("FSMVersion %d, %08x\n", r.d[0], r.a[0]));
 	if ((r.d[0] & 0xffff) || (r.a[0] < 0x0120)) {
 		printf("WARNING: FSM <1.2 found, disabling ExtFS\n");
@@ -500,14 +501,14 @@ void InstallExtFS(void)
 
 	// Yes, allocate file system stack
 	r.d[0] = STACK_SIZE;
-	Execute68kTrap(0xa71e, &r);		// NewPtrSysClear()
+	Execute68kTrap(ATRAP_NewPtrSysClear, &r);		// NewPtrSysClear()
 	if (r.a[0] == 0)
 		return;
 	uint32 fs_stack = r.a[0];
 
 	// Allocate memory for our data structures and 68k code
 	r.d[0] = SIZEOF_fsdat;
-	Execute68kTrap(0xa71e, &r);		// NewPtrSysClear()
+	Execute68kTrap(ATRAP_NewPtrSysClear, &r);		// NewPtrSysClear()
 	if (r.a[0] == 0)
 		return;
 	fs_data = r.a[0];
@@ -528,7 +529,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x2f09); p+= 2;	// move.l a1,-(sp)
 	WriteMacInt16(p, 0x4267); p+= 2;	// clr.w -(sp)
 	WriteMacInt16(p, 0x7006); p+= 2;	// UTAllocateVCB
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsAddNewVCB)
@@ -538,7 +539,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x2f08); p+= 2;	// move.l a0,-(a7)
 	WriteMacInt16(p, 0x2f09); p+= 2;	// move.l a1,-(a7)
 	WriteMacInt16(p, 0x7007); p+= 2;	// UTAddNewVCB
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsDetermineVol)
@@ -550,7 +551,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x2f0b); p+= 2;	// move.l a3,-(sp)
 	WriteMacInt16(p, 0x2f0c); p+= 2;	// move.l a4,-(sp)
 	WriteMacInt16(p, 0x701d); p+= 2;	// UTDetermineVol
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsResolveWDCB)
@@ -561,7 +562,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x3f02); p+= 2;	// move.w d2,-(sp)
 	WriteMacInt16(p, 0x2f08); p+= 2;	// move.l a0,-(sp)
 	WriteMacInt16(p, 0x700e); p+= 2;	// UTResolveWDCB
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsGetDefaultVol)
@@ -569,7 +570,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x4267); p+= 2;	// clr.w -(sp)
 	WriteMacInt16(p, 0x2f08); p+= 2;	// move.l a0,-(sp)
 	WriteMacInt16(p, 0x7012); p+= 2;	// UTGetDefaultVol
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsGetPathComponentName)
@@ -577,7 +578,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x4267); p+= 2;	// clr.w -(sp)
 	WriteMacInt16(p, 0x2f08); p+= 2;	// move.l a0,-(sp)
 	WriteMacInt16(p, 0x701c); p+= 2;	// UTGetPathComponentName
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsParsePathname)
@@ -586,7 +587,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x2f08); p+= 2;	// move.l a0,-(sp)
 	WriteMacInt16(p, 0x2f09); p+= 2;	// move.l a1,-(sp)
 	WriteMacInt16(p, 0x701b); p+= 2;	// UTParsePathname
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsDisposeVCB)
@@ -594,7 +595,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x4267); p+= 2;	// clr.w -(sp)
 	WriteMacInt16(p, 0x2f08); p+= 2;	// move.l a0,-(sp)
 	WriteMacInt16(p, 0x7008); p+= 2;	// UTDisposeVCB
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsCheckWDRefNum)
@@ -602,7 +603,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x4267); p+= 2;	// clr.w -(sp)
 	WriteMacInt16(p, 0x3f00); p+= 2;	// move.w d0,-(sp)
 	WriteMacInt16(p, 0x7013); p+= 2;	// UTCheckWDRefNum
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsSetDefaultVol)
@@ -612,7 +613,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x2f01); p+= 2;	// move.l d1,-(sp)
 	WriteMacInt16(p, 0x3f02); p+= 2;	// move.w d2,-(sp)
 	WriteMacInt16(p, 0x7011); p+= 2;	// UTSetDefaultVol
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsAllocateFCB)
@@ -621,7 +622,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x2f08); p+= 2;	// move.l a0,-(sp)
 	WriteMacInt16(p, 0x2f09); p+= 2;	// move.l a1,-(sp)
 	WriteMacInt16(p, 0x7000); p+= 2;	// UTAllocateFCB
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsReleaseFCB)
@@ -629,7 +630,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x4267); p+= 2;	// clr.w -(sp)
 	WriteMacInt16(p, 0x3f00); p+= 2;	// move.w d0,-(sp)
 	WriteMacInt16(p, 0x7001); p+= 2;	// UTReleaseFCB
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsIndexFCB)
@@ -639,7 +640,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x2f09); p+= 2;	// move.l a1,-(sp)
 	WriteMacInt16(p, 0x2f0a); p+= 2;	// move.l a2,-(sp)
 	WriteMacInt16(p, 0x7004); p+= 2;	// UTIndexFCB
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsResolveFCB)
@@ -648,7 +649,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x3f00); p+= 2;	// move.w d0,-(sp)
 	WriteMacInt16(p, 0x2f08); p+= 2;	// move.l a0,-(sp)
 	WriteMacInt16(p, 0x7005); p+= 2;	// UTResolveFCB
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsAdjustEOF)
@@ -656,7 +657,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x4267); p+= 2;	// clr.w -(sp)
 	WriteMacInt16(p, 0x3f00); p+= 2;	// move.w d0,-(sp)
 	WriteMacInt16(p, 0x7010); p+= 2;	// UTAdjustEOF
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsAllocateWDCB)
@@ -664,7 +665,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x4267); p+= 2;	// clr.w -(sp)
 	WriteMacInt16(p, 0x2f08); p+= 2;	// move.l a0,-(sp)
 	WriteMacInt16(p, 0x700c); p+= 2;	// UTAllocateWDCB
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != fsReleaseWDCB)
@@ -672,7 +673,7 @@ void InstallExtFS(void)
 	WriteMacInt16(p, 0x4267); p+= 2;	// clr.w -(sp)
 	WriteMacInt16(p, 0x3f00); p+= 2;	// move.w d0,-(sp)
 	WriteMacInt16(p, 0x700d); p+= 2;	// UTReleaseWDCB
-	WriteMacInt16(p, 0xa824); p+= 2;	// FSMgr
+	WriteMacInt16(p, ATRAP_FSMgr); p+= 2;	// FSMgr
 	WriteMacInt16(p, 0x301f); p+= 2;	// move.w (sp)+,d0
 	WriteMacInt16(p, M68K_RTS); p+= 2;
 	if (p - fs_data != SIZEOF_fsdat)
@@ -691,7 +692,7 @@ void InstallExtFS(void)
 	D(bug(" adding drive %d\n", drive_number));
 	r.d[0] = (drive_number << 16) | (DiskRefNum & 0xffff);
 	r.a[0] = fs_data + fsDrvStatus + dsQLink;
-	Execute68kTrap(0xa04e, &r);	// AddDrive()
+	Execute68kTrap(ATRAP_AddDrive, &r);	// AddDrive()
 
 	// Init FSDRec and install file system
 	D(bug(" installing file system\n"));
@@ -706,7 +707,7 @@ void InstallExtFS(void)
 	WriteMacInt32(fs_data + fsFSD + fsdHFSCI + idSector, (uint32)-1);
 	r.a[0] = fs_data + fsFSD;
 	r.d[0] = 0;					// InstallFS
-	Execute68kTrap(0xa0ac, &r);	// FSMDispatch()
+	Execute68kTrap(ATRAP_FSMDispatch, &r);	// FSMDispatch()
 	D(bug(" InstallFS() returned %d\n", r.d[0]));
 
 	// Enable HFS component
@@ -716,7 +717,7 @@ void InstallExtFS(void)
 	r.d[3] = SIZEOF_FSDRec;
 	r.d[4] = MY_FSID;
 	r.d[0] = 5;					// SetFSInfo
-	Execute68kTrap(0xa0ac, &r);	// FSMDispatch()
+	Execute68kTrap(ATRAP_FSMDispatch, &r);	// FSMDispatch()
 	D(bug(" SetFSInfo() returned %d\n", r.d[0]));
 
 	// Mount volume
@@ -726,7 +727,7 @@ void InstallExtFS(void)
 	WriteMacInt32(fs_data + fsVMI + vmiMedia, MY_MEDIA_TYPE);
 	r.a[0] = fs_data + fsPB;
 	r.d[0] = 0x41;				// PBVolumeMount
-	Execute68kTrap(0xa260, &r);	// HFSDispatch()
+	Execute68kTrap(ATRAP_HFSDispatch, &r);	// HFSDispatch()
 	D(bug(" PBVolumeMount() returned %d\n", r.d[0]));
 	return;
 
@@ -1084,7 +1085,7 @@ static int16 fs_volume_mount(uint32 pb)
 	D(bug("  posting diskInsertEvent\n"));
 	r.d[0] = drive_number;
 	r.a[0] = 7;	// diskEvent
-	Execute68kTrap(0xa02f, &r);		// PostEvent()
+	Execute68kTrap(ATRAP_PostEvent, &r);		// PostEvent()
 
 	// Return volume RefNum
 	WriteMacInt16(pb + ioVRefNum, vRefNum);

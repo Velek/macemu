@@ -26,7 +26,7 @@
 
 #include "sigsegv.h"
 #include "vm_alloc.h"
-#ifdef _WIN32
+#ifdef WIN32
 #include "util_windows.h"
 #endif
 
@@ -180,7 +180,7 @@ static inline unsigned find_next_page_clear(unsigned page)
 static pthread_mutex_t vosf_lock = PTHREAD_MUTEX_INITIALIZER;	// Mutex to protect frame buffer (dirtyPages in fact)
 #define LOCK_VOSF pthread_mutex_lock(&vosf_lock);
 #define UNLOCK_VOSF pthread_mutex_unlock(&vosf_lock);
-#elif defined(_WIN32)
+#elif defined(WIN32)
 static mutex_t vosf_lock;										// Mutex to protect frame buffer (dirtyPages in fact)
 #define LOCK_VOSF vosf_lock.lock();
 #define UNLOCK_VOSF vosf_lock.unlock();
@@ -253,9 +253,9 @@ static bool video_vosf_profitable(uint32 *duration_p = NULL, uint32 *n_page_faul
 	}
 
 	if (duration_p)
-	  *duration_p = duration;
+        *duration_p = duration;
 	if (n_page_faults_p)
-	  *n_page_faults_p = n_page_faults;
+        *n_page_faults_p = n_page_faults;
 
 	D(bug("Triggered %d page faults in %ld usec (%.1f usec per fault)\n", n_page_faults, duration, double(duration) / double(n_page_faults)));
 	return ((duration / n_tries) < (VOSF_PROFITABLE_THRESHOLD * (frame_skip ? frame_skip : 1)));

@@ -34,6 +34,7 @@
 
 #include "debug.h"
 
+#include <toolbox_traps.h>
 
 // Supported sample rates, sizes and channels
 vector<uint32> audio_sample_rates;
@@ -77,7 +78,7 @@ static int32 AudioGetInfo(uint32 infoPtr, uint32 selector, uint32 sourceID)
 
 		case siSampleSizeAvailable: {
 			r.d[0] = audio_sample_sizes.size() * 2;
-			Execute68kTrap(0xa122, &r);	// NewHandle()
+			Execute68kTrap(ATRAP_NewHandle, &r);	// NewHandle()
 			uint32 h = r.a[0];
 			if (h == 0)
 				return memFullErr;
@@ -95,7 +96,7 @@ static int32 AudioGetInfo(uint32 infoPtr, uint32 selector, uint32 sourceID)
 
 		case siChannelAvailable: {
 			r.d[0] = audio_channel_counts.size() * 2;
-			Execute68kTrap(0xa122, &r);	// NewHandle()
+			Execute68kTrap(ATRAP_NewHandle, &r);	// NewHandle()
 			uint32 h = r.a[0];
 			if (h == 0)
 				return memFullErr;
@@ -113,7 +114,7 @@ static int32 AudioGetInfo(uint32 infoPtr, uint32 selector, uint32 sourceID)
 
 		case siSampleRateAvailable: {
 			r.d[0] = audio_sample_rates.size() * 4;
-			Execute68kTrap(0xa122, &r);	// NewHandle()
+			Execute68kTrap(ATRAP_NewHandle, &r);	// NewHandle()
 			uint32 h = r.a[0];
 			if (h == 0)
 				return memFullErr;
@@ -283,9 +284,9 @@ int32 AudioDispatch(uint32 params, uint32 globals)
 
 				// Allocate global data area
 				r.d[0] = SIZEOF_adat;
-				Execute68kTrap(0xa040, &r);	// ResrvMem()
+				Execute68kTrap(ATRAP_ResrvMem, &r);	// ResrvMem()
 				r.d[0] = SIZEOF_adat;
-				Execute68kTrap(0xa31e, &r);	// NewPtrClear()
+				Execute68kTrap(ATRAP_NewPtrClear, &r);	// NewPtrClear()
 				if (r.a[0] == 0)
 					return memFullErr;
 				audio_data = r.a[0];
@@ -297,7 +298,7 @@ int32 AudioDispatch(uint32 params, uint32 globals)
 				WriteMacInt16(p, 0x2f09); p += 2;	// move.l	a1,-(sp)
 				WriteMacInt16(p, 0x2f08); p += 2;	// move.l	a0,-(sp)
 				WriteMacInt16(p, 0x7024); p += 2;	// moveq	#$24,d0
-				WriteMacInt16(p, 0xa82a); p += 2;	// ComponentDispatch
+				WriteMacInt16(p, ATRAP_ComponentDispatch); p += 2;	// ComponentDispatch
 				WriteMacInt16(p, 0x201f); p += 2;	// move.l	(sp)+,d0
 				WriteMacInt16(p, M68K_RTS); p += 2;	// rts
 				if (p - audio_data != adatOpenMixer)
@@ -308,7 +309,7 @@ int32 AudioDispatch(uint32 params, uint32 globals)
 				WriteMacInt16(p, 0x2f08); p += 2;	// move.l	a0,-(sp)
 				WriteMacInt16(p, 0x203c); p += 2;	// move.l	#$06140018,d0
 				WriteMacInt32(p, 0x06140018); p+= 4;
-				WriteMacInt16(p, 0xa800); p += 2;	// SoundDispatch
+				WriteMacInt16(p, ATRAP_SoundDispatch); p += 2;	// SoundDispatch
 				WriteMacInt16(p, 0x301f); p += 2;	// move.w	(sp)+,d0
 				WriteMacInt16(p, 0x48c0); p += 2;	// ext.l	d0
 				WriteMacInt16(p, M68K_RTS); p += 2;	// rts
@@ -318,7 +319,7 @@ int32 AudioDispatch(uint32 params, uint32 globals)
 				WriteMacInt16(p, 0x2f08); p += 2;	// move.l	a0,-(sp)
 				WriteMacInt16(p, 0x203c); p += 2;	// move.l	#$02180018,d0
 				WriteMacInt32(p, 0x02180018); p+= 4;
-				WriteMacInt16(p, 0xa800); p += 2;	// SoundDispatch
+				WriteMacInt16(p, ATRAP_SoundDispatch); p += 2;	// SoundDispatch
 				WriteMacInt16(p, 0x301f); p += 2;	// move.w	(sp)+,d0
 				WriteMacInt16(p, 0x48c0); p += 2;	// ext.l	d0
 				WriteMacInt16(p, M68K_RTS); p += 2;	// rts
@@ -332,7 +333,7 @@ int32 AudioDispatch(uint32 params, uint32 globals)
 				WriteMacInt16(p, 0x2f3c); p += 2;	// move.l	#$000c0103,-(sp)
 				WriteMacInt32(p, 0x000c0103); p+= 4;
 				WriteMacInt16(p, 0x7000); p += 2;	// moveq	#0,d0
-				WriteMacInt16(p, 0xa82a); p += 2;	// ComponentDispatch
+				WriteMacInt16(p, ATRAP_ComponentDispatch); p += 2;	// ComponentDispatch
 				WriteMacInt16(p, 0x201f); p += 2;	// move.l	(sp)+,d0
 				WriteMacInt16(p, M68K_RTS); p += 2;	// rts
 				if (p - audio_data != adatSetInfo)
@@ -345,7 +346,7 @@ int32 AudioDispatch(uint32 params, uint32 globals)
 				WriteMacInt16(p, 0x2f3c); p += 2;	// move.l	#$000c0104,-(sp)
 				WriteMacInt32(p, 0x000c0104); p+= 4;
 				WriteMacInt16(p, 0x7000); p += 2;	// moveq	#0,d0
-				WriteMacInt16(p, 0xa82a); p += 2;	// ComponentDispatch
+				WriteMacInt16(p, ATRAP_ComponentDispatch); p += 2;	// ComponentDispatch
 				WriteMacInt16(p, 0x201f); p += 2;	// move.l	(sp)+,d0
 				WriteMacInt16(p, M68K_RTS); p += 2;	// rts
 				if (p - audio_data != adatPlaySourceBuffer)
@@ -358,7 +359,7 @@ int32 AudioDispatch(uint32 params, uint32 globals)
 				WriteMacInt16(p, 0x2f3c); p += 2;	// move.l	#$000c0108,-(sp)
 				WriteMacInt32(p, 0x000c0108); p+= 4;
 				WriteMacInt16(p, 0x7000); p += 2;	// moveq	#0,d0
-				WriteMacInt16(p, 0xa82a); p += 2;	// ComponentDispatch
+				WriteMacInt16(p, ATRAP_ComponentDispatch); p += 2;	// ComponentDispatch
 				WriteMacInt16(p, 0x201f); p += 2;	// move.l	(sp)+,d0
 				WriteMacInt16(p, M68K_RTS); p += 2;	// rts
 				if (p - audio_data != adatGetSourceData)
@@ -369,7 +370,7 @@ int32 AudioDispatch(uint32 params, uint32 globals)
 				WriteMacInt16(p, 0x2f3c); p += 2;	// move.l	#$00040004,-(sp)
 				WriteMacInt32(p, 0x00040004); p+= 4;
 				WriteMacInt16(p, 0x7000); p += 2;	// moveq	#0,d0
-				WriteMacInt16(p, 0xa82a); p += 2;	// ComponentDispatch
+				WriteMacInt16(p, ATRAP_ComponentDispatch); p += 2;	// ComponentDispatch
 				WriteMacInt16(p, 0x201f); p += 2;	// move.l	(sp)+,d0
 				WriteMacInt16(p, M68K_RTS); p += 2;	// rts
 				if (p - audio_data != adatStartSource)
@@ -381,7 +382,7 @@ int32 AudioDispatch(uint32 params, uint32 globals)
 				WriteMacInt16(p, 0x2f3c); p += 2;	// move.l	#$00060105,-(sp)
 				WriteMacInt32(p, 0x00060105); p+= 4;
 				WriteMacInt16(p, 0x7000); p += 2;	// moveq	#0,d0
-				WriteMacInt16(p, 0xa82a); p += 2;	// ComponentDispatch
+				WriteMacInt16(p, ATRAP_ComponentDispatch); p += 2;	// ComponentDispatch
 				WriteMacInt16(p, 0x201f); p += 2;	// move.l	(sp)+,d0
 				WriteMacInt16(p, M68K_RTS); p += 2;	// rts
 				if (p - audio_data != adatData)
@@ -409,7 +410,7 @@ adat_error:	printf("FATAL: audio component data block initialization error\n");
 						return r.d[0];
 					}
 					r.a[0] = audio_data;
-					Execute68kTrap(0xa01f, &r);	// DisposePtr()
+					Execute68kTrap(ATRAP_DisposePtr, &r);	// DisposePtr()
 					audio_data = 0;
 				}
 				AudioStatus.num_sources = 0;

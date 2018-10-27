@@ -41,6 +41,7 @@
 
 #include "debug.h"
 
+#include <toolbox_traps.h>
 
 // Global variables
 uint32 UniversalInfo;		// ROM offset of UniversalInfo
@@ -122,7 +123,7 @@ static uint32 find_rom_resource(uint32 s_type, int16 s_id, bool cont = false)
 static uint32 find_rom_trap(uint16 trap)
 {
 	uint8 *bp = (uint8 *)(ROMBaseHost + ReadMacInt32(ROMBaseMac + 0x22));
-	uint16 rom_trap = 0xa800;
+	uint16 rom_trap = ATRAP_SoundDispatch;
 	uint32 ofs = 0;
 
 again:
@@ -149,7 +150,7 @@ again:
 			return unimplemented ? 0 : ofs;
 		rom_trap++;
 	}
-	rom_trap = 0xa000;
+	rom_trap = ATRAP_Open;
 	goto again;
 }
 
@@ -712,20 +713,20 @@ void InstallDrivers(uint32 pb)
 
 	// Install Microseconds() replacement routine
 	r.a[0] = ROMBaseMac + microseconds_offset;
-	r.d[0] = 0xa093;
-	Execute68kTrap(0xa247, &r);		// SetOSTrapAddress()
+	r.d[0] = ATRAP_Microseconds;
+	Execute68kTrap(ATRAP_SetOSTrapAddress, &r);		// SetOSTrapAddress()
 
 	// Install DebugUtil() replacement routine
 	r.a[0] = ROMBaseMac + debugutil_offset;
-	r.d[0] = 0xa08d;
-	Execute68kTrap(0xa247, &r);		// SetOSTrapAddress()
+	r.d[0] = ATRAP_DebugUtil;
+	Execute68kTrap(ATRAP_SetOSTrapAddress, &r);		// SetOSTrapAddress()
 
 	// Install disk driver
 	r.a[0] = ROMBaseMac + sony_offset + 0x100;
 	r.d[0] = (uint32)DiskRefNum;
-	Execute68kTrap(0xa43d, &r);		// DrvrInstallRsrvMem()
+	Execute68kTrap(ATRAP_DrvrInstallRsrvMem, &r);		// DrvrInstallRsrvMem()
 	r.a[0] = ReadMacInt32(ReadMacInt32(0x11c) + ~DiskRefNum * 4);	// Get driver handle from Unit Table
-	Execute68kTrap(0xa029, &r);		// HLock()
+	Execute68kTrap(ATRAP_HLock, &r);		// HLock()
 	uint32 dce = ReadMacInt32(r.a[0]);
 	WriteMacInt32(dce + dCtlDriver, ROMBaseMac + sony_offset + 0x100);
 	WriteMacInt16(dce + dCtlFlags, DiskDriverFlags);
@@ -733,7 +734,7 @@ void InstallDrivers(uint32 pb)
 	// Open disk driver
 	WriteMacInt32(pb + ioNamePtr, ROMBaseMac + sony_offset + 0x112);
 	r.a[0] = pb;
-	Execute68kTrap(0xa000, &r);		// Open()
+	Execute68kTrap(ATRAP_Open, &r);		// Open()
 
 	// Install CD-ROM driver unless nocdrom option given
 	if (!PrefsFindBool("nocdrom")) {
@@ -741,9 +742,9 @@ void InstallDrivers(uint32 pb)
 		// Install CD-ROM driver
 		r.a[0] = ROMBaseMac + sony_offset + 0x200;
 		r.d[0] = (uint32)CDROMRefNum;
-		Execute68kTrap(0xa43d, &r);		// DrvrInstallRsrvMem()
+		Execute68kTrap(ATRAP_DrvrInstallRsrvMem, &r);		// DrvrInstallRsrvMem()
 		r.a[0] = ReadMacInt32(ReadMacInt32(0x11c) + ~CDROMRefNum * 4);	// Get driver handle from Unit Table
-		Execute68kTrap(0xa029, &r);		// HLock()
+		Execute68kTrap(ATRAP_HLock, &r);		// HLock()
 		dce = ReadMacInt32(r.a[0]);
 		WriteMacInt32(dce + dCtlDriver, ROMBaseMac + sony_offset + 0x200);
 		WriteMacInt16(dce + dCtlFlags, CDROMDriverFlags);
@@ -751,7 +752,7 @@ void InstallDrivers(uint32 pb)
 		// Open CD-ROM driver
 		WriteMacInt32(pb + ioNamePtr, ROMBaseMac + sony_offset + 0x212);
 		r.a[0] = pb;
-		Execute68kTrap(0xa000, &r);		// Open()
+		Execute68kTrap(ATRAP_Open, &r);		// Open()
 	}
 }
 
@@ -770,8 +771,8 @@ void InstallSERD(void)
 	// Install .AIn driver
 	r.d[0] = (uint32)-6;
 	r.a[0] = ROMBaseMac + serd_offset + 0x100;
-	Execute68kTrap(0xa53d, &r);	// DrvrInstallRsrvMem()
-	Execute68kTrap(0xa029, &r);	// HLock()
+	Execute68kTrap(ATRAP_DrvrInstallRsrvMem2, &r);	// DrvrInstallRsrvMem()
+	Execute68kTrap(ATRAP_HLock, &r);	// HLock()
 	uint32 drvr_ptr = ReadMacInt32(r.a[0]);
 	WriteMacInt32(drvr_ptr + dCtlDriver, ROMBaseMac + serd_offset + 0x100);			// Pointer to driver header
 	WriteMacInt16(drvr_ptr + dCtlFlags, (ain_driver[0] << 8) + ain_driver[1]);		// Driver flags
@@ -780,8 +781,8 @@ void InstallSERD(void)
 	// Install .AOut driver
 	r.d[0] = (uint32)-7;
 	r.a[0] = ROMBaseMac + serd_offset + 0x200;
-	Execute68kTrap(0xa53d, &r);	// DrvrInstallRsrvMem()
-	Execute68kTrap(0xa029, &r);	// HLock()
+	Execute68kTrap(ATRAP_DrvrInstallRsrvMem2, &r);	// DrvrInstallRsrvMem()
+	Execute68kTrap(ATRAP_HLock, &r);	// HLock()
 	drvr_ptr = ReadMacInt32(r.a[0]);
 	WriteMacInt32(drvr_ptr + dCtlDriver, ROMBaseMac + serd_offset + 0x200);			// Pointer to driver header
 	WriteMacInt16(drvr_ptr + dCtlFlags, (aout_driver[0] << 8) + aout_driver[1]);	// Driver flags
@@ -790,8 +791,8 @@ void InstallSERD(void)
 	// Install .BIn driver
 	r.d[0] = (uint32)-8;
 	r.a[0] = ROMBaseMac + serd_offset + 0x300;
-	Execute68kTrap(0xa53d, &r);	// DrvrInstallRsrvMem()
-	Execute68kTrap(0xa029, &r);	// HLock()
+	Execute68kTrap(ATRAP_DrvrInstallRsrvMem2, &r);	// DrvrInstallRsrvMem()
+	Execute68kTrap(ATRAP_HLock, &r);	// HLock()
 	drvr_ptr = ReadMacInt32(r.a[0]);
 	WriteMacInt32(drvr_ptr + dCtlDriver, ROMBaseMac + serd_offset + 0x300);			// Pointer to driver header
 	WriteMacInt16(drvr_ptr + dCtlFlags, (bin_driver[0] << 8) + bin_driver[1]);		// Driver flags
@@ -800,8 +801,8 @@ void InstallSERD(void)
 	// Install .BOut driver
 	r.d[0] = (uint32)-9;
 	r.a[0] = ROMBaseMac + serd_offset + 0x400;
-	Execute68kTrap(0xa53d, &r);	// DrvrInstallRsrvMem()
-	Execute68kTrap(0xa029, &r);	// HLock()
+	Execute68kTrap(ATRAP_DrvrInstallRsrvMem2, &r);	// DrvrInstallRsrvMem()
+	Execute68kTrap(ATRAP_HLock, &r);	// HLock()
 	drvr_ptr = ReadMacInt32(r.a[0]);
 	WriteMacInt32(drvr_ptr + dCtlDriver, ROMBaseMac + serd_offset + 0x400);			// Pointer to driver header
 	WriteMacInt16(drvr_ptr + dCtlFlags, (bout_driver[0] << 8) + bout_driver[1]);	// Driver flags
@@ -848,7 +849,7 @@ bool CheckROM(void)
 // ROM patches for Mac Classic/SE ROMs (version $0276)
 static bool patch_rom_classic(void)
 {
-	uint16 *wp;
+	volatile uint16 *wp;
 	uint32 base;
 
 	// Don't jump into debugger (VIA line)
@@ -1013,8 +1014,8 @@ static bool patch_rom_classic(void)
 // ROM patches for 32-bit clean Mac-II ROMs (version $067c)
 static bool patch_rom_32(void)
 {
-	uint16 *wp;
-	uint8 *bp;
+	volatile uint16 *wp;
+	volatile uint8 *bp;
 	uint32 base;
 
 	// Find UniversalInfo
@@ -1180,7 +1181,7 @@ static bool patch_rom_32(void)
 	}
 
 	// Patch ClkNoMem
-	base = find_rom_trap(0xa053);
+	base = find_rom_trap(ATRAP_ClkNoMem);
 	wp = (uint16 *)(ROMBaseHost + base);
 	if (ntohs(*wp) == 0x4ed5) {	// ROM23/26/27/32
 		static const uint8 clk_no_mem_dat[] = {0x40, 0xc2, 0x00, 0x7c, 0x07, 0x00, 0x48, 0x42};
@@ -1565,20 +1566,20 @@ static bool patch_rom_32(void)
 	memcpy(ROMBaseHost + serd_offset + 0x400, bout_driver, sizeof(bout_driver));
 
 	// Replace ADBOp()
-	memcpy(ROMBaseHost + find_rom_trap(0xa07c), adbop_patch, sizeof(adbop_patch));
+	memcpy(ROMBaseHost + find_rom_trap(ATRAP_ADBOp), adbop_patch, sizeof(adbop_patch));
 
 	// Replace Time Manager (the Microseconds patch is activated in InstallDrivers())
-	wp = (uint16 *)(ROMBaseHost + find_rom_trap(0xa058));
+	wp = (uint16 *)(ROMBaseHost + find_rom_trap(ATRAP_InsTime));
 	*wp++ = htons(M68K_EMUL_OP_INSTIME);
 	*wp = htons(M68K_RTS);
-	wp = (uint16 *)(ROMBaseHost + find_rom_trap(0xa059));
+	wp = (uint16 *)(ROMBaseHost + find_rom_trap(ATRAP_RmvTime));
 	*wp++ = htons(0x40e7);		// move	sr,-(sp)
 	*wp++ = htons(0x007c);		// ori	#$0700,sr
 	*wp++ = htons(0x0700);
 	*wp++ = htons(M68K_EMUL_OP_RMVTIME);
 	*wp++ = htons(0x46df);		// move	(sp)+,sr
 	*wp = htons(M68K_RTS);
-	wp = (uint16 *)(ROMBaseHost + find_rom_trap(0xa05a));
+	wp = (uint16 *)(ROMBaseHost + find_rom_trap(ATRAP_PrimeTime));
 	*wp++ = htons(0x40e7);		// move	sr,-(sp)
 	*wp++ = htons(0x007c);		// ori	#$0700,sr
 	*wp++ = htons(0x0700);
@@ -1595,7 +1596,7 @@ static bool patch_rom_32(void)
 	*wp = htons(M68K_RTS);
 
 	// Replace SCSIDispatch()
-	wp = (uint16 *)(ROMBaseHost + find_rom_trap(0xa815));
+	wp = (uint16 *)(ROMBaseHost + find_rom_trap(ATRAP_SCSIDispatch));
 	*wp++ = htons(M68K_EMUL_OP_SCSI_DISPATCH);
 	*wp++ = htons(0x2e49);		// move.l	a1,a7
 	*wp = htons(M68K_JMP_A0);
@@ -1615,12 +1616,12 @@ static bool patch_rom_32(void)
 	*wp = htons(M68K_RTS);
 
 	// Patch PowerOff()
-	wp = (uint16 *)(ROMBaseHost + find_rom_trap(0xa05b));	// PowerOff()
+	wp = (uint16 *)(ROMBaseHost + find_rom_trap(ATRAP_PowerOff));	// PowerOff()
 	*wp = htons(M68K_EMUL_OP_SHUTDOWN);
 
 	// Install PutScrap() patch for clipboard data exchange (the patch is activated by EMUL_OP_INSTALL_DRIVERS)
 	PutScrapPatch = ROMBaseMac + sony_offset + 0xc00;
-	base = ROMBaseMac + find_rom_trap(0xa9fe);
+	base = ROMBaseMac + find_rom_trap(ATRAP_PutScrap);
 	wp = (uint16 *)(ROMBaseHost + sony_offset + 0xc00);
 	*wp++ = htons(M68K_EMUL_OP_PUT_SCRAP);
 	*wp++ = htons(M68K_JMP);
@@ -1629,7 +1630,7 @@ static bool patch_rom_32(void)
 
 	// Install GetScrap() patch for clipboard data exchange (the patch is activated by EMUL_OP_INSTALL_DRIVERS)
 	GetScrapPatch = ROMBaseMac + sony_offset + 0xd00;
-	base = ROMBaseMac + find_rom_trap(0xa9fd);
+	base = ROMBaseMac + find_rom_trap(ATRAP_GetScrap);
 	wp = (uint16 *)(ROMBaseHost + sony_offset + 0xd00);
 	*wp++ = htons(M68K_EMUL_OP_GET_SCRAP);
 	*wp++ = htons(M68K_JMP);

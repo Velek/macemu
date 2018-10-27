@@ -44,6 +44,7 @@ using std::vector;
 
 #include "debug.h"
 
+#include <toolbox_traps.h>
 
 // .Disk Disk/drive icon
 const uint8 DiskIcon[258] = {
@@ -234,7 +235,7 @@ static void mount_mountable_volumes(void)
 			M68kRegisters r;
 			r.d[0] = info->num;
 			r.a[0] = 7;	// diskEvent
-			Execute68kTrap(0xa02f, &r);		// PostEvent()
+			Execute68kTrap(ATRAP_PostEvent, &r);		// PostEvent()
 			info->to_be_mounted = false;
 		}
 	}
@@ -265,7 +266,7 @@ int16 DiskOpen(uint32 pb, uint32 dce)
 			// Allocate drive status record
 			M68kRegisters r;
 			r.d[0] = SIZEOF_DrvSts;
-			Execute68kTrap(0xa71e, &r);		// NewPtrSysClear()
+			Execute68kTrap(ATRAP_NewPtrSysClear, &r);		// NewPtrSysClear()
 			if (r.a[0] == 0)
 				continue;
 			info->status = r.a[0];
@@ -298,7 +299,7 @@ int16 DiskOpen(uint32 pb, uint32 dce)
 			D(bug(" adding drive %d\n", info->num));
 			r.d[0] = (info->num << 16) | (DiskRefNum & 0xffff);
 			r.a[0] = info->status + dsQLink;
-			Execute68kTrap(0xa04e, &r);	// AddDrive()
+			Execute68kTrap(ATRAP_AddDrive, &r);	// AddDrive()
 		}
 	}
 	return noErr;
@@ -403,7 +404,7 @@ int16 DiskControl(uint32 pb, uint32 dce)
 				M68kRegisters r;
 				r.d[0] = info->num;
 				r.a[0] = 7;	// diskEvent
-				Execute68kTrap(0xa02f, &r);		// PostEvent()
+				Execute68kTrap(ATRAP_PostEvent, &r);		// PostEvent()
 			} else if (ReadMacInt8(info->status + dsDiskInPlace) > 0) {
 				SysEject(info->fh);
 				WriteMacInt8(info->status + dsDiskInPlace, 0);
@@ -444,13 +445,13 @@ int16 DiskStatus(uint32 pb, uint32 dce)
 {
 	drive_vec::iterator info = get_drive_info(ReadMacInt16(pb + ioVRefNum));
 	uint16 code = ReadMacInt16(pb + csCode);
-	D(bug("DiskStatus %d\n", code));
+//	D(bug("DiskStatus %d\n", code));
 
 	// General codes (we can get these even if the drive was invalid)
 	switch (code) {
 		case 43: {	// Driver gestalt
 			uint32 sel = ReadMacInt32(pb + csParam);
-			D(bug(" driver gestalt %c%c%c%c\n", sel >> 24, sel >> 16,  sel >> 8, sel));
+//			D(bug(" driver gestalt %c%c%c%c\n", sel >> 24, sel >> 16,  sel >> 8, sel));
 			switch (sel) {
 				case FOURCC('v','e','r','s'):	// Version
 					WriteMacInt32(pb + csParam + 4, 0x01008000);

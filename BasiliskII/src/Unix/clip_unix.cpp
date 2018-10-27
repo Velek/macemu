@@ -69,6 +69,8 @@
 #define DEBUG 0
 #include "debug.h"
 
+#include <toolbox_traps.h>
+
 #ifndef NO_STD_NAMESPACE
 using std::vector;
 #endif
@@ -475,7 +477,7 @@ static void do_getscrap(void **handle, uint32 type, int32 offset)
 	// Allocate space for new scrap in MacOS side
 	M68kRegisters r;
 	r.d[0] = data.size();
-	Execute68kTrap(0xa71e, &r);			// NewPtrSysClear()
+	Execute68kTrap(ATRAP_NewPtrSysClear, &r);			// NewPtrSysClear()
 	uint32 scrap_area = r.a[0];
 
 	if (scrap_area) {
@@ -507,7 +509,7 @@ static void do_getscrap(void **handle, uint32 type, int32 offset)
 			M68K_RTS >> 8, M68K_RTS & 0xff
 		};
 		r.d[0] = sizeof(proc);
-		Execute68kTrap(0xa71e, &r);		// NewPtrSysClear()
+        Execute68kTrap(ATRAP_NewPtrSysClear, &r);			// NewPtrSysClear()
 		uint32 proc_area = r.a[0];
 
 		// The procedure is run-time generated because it must lays in
@@ -523,9 +525,9 @@ static void do_getscrap(void **handle, uint32 type, int32 offset)
 
 		// We are done with scratch memory
 		r.a[0] = proc_area;
-		Execute68kTrap(0xa01f, &r);		// DisposePtr
+		Execute68kTrap(ATRAP_DisposePtr, &r);		// DisposePtr
 		r.a[0] = scrap_area;
-		Execute68kTrap(0xa01f, &r);		// DisposePtr
+		Execute68kTrap(ATRAP_DisposePtr, &r);		// DisposePtr
 	}
 }
 

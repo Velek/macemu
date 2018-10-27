@@ -30,6 +30,7 @@
 #include "emul_op.h"
 
 #include "debug.h"
+#include <toolbox_traps.h>
 
 #ifndef NO_STD_NAMESPACE
 using std::vector;
@@ -223,7 +224,7 @@ static void do_getscrap(void **handle, uint32 type, int32 offset)
 				// Allocate space for new scrap in MacOS side
 				M68kRegisters r;
 				r.d[0] = length;
-				Execute68kTrap(0xa71e, &r);	// NewPtrSysClear()
+				Execute68kTrap(ATRAP_NewPtrSysClear, &r);	// NewPtrSysClear()
 				uint32 scrap_area = r.a[0];
 
 				if (scrap_area) {
@@ -270,7 +271,7 @@ static void do_getscrap(void **handle, uint32 type, int32 offset)
 
 					// We are done with scratch memory
 					r.a[0] = scrap_area;
-					Execute68kTrap(0xa01f, &r);		// DisposePtr
+					Execute68kTrap(ATRAP_DisposePtr, &r);		// DisposePtr
 				}
 			}
 			GlobalUnlock(hData);

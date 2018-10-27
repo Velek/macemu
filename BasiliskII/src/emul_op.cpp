@@ -47,6 +47,7 @@
 #endif
 
 #include "debug.h"
+#include <toolbox_traps.h>
 
 
 /*
@@ -76,7 +77,7 @@ void EmulOp(uint16 opcode, M68kRegisters *r)
 					if (ROMVersion == ROM_VERSION_32) {
 						M68kRegisters r2;
 						r2.d[0] = 0;
-						Execute68kTrap(0xa072, &r2);
+						Execute68kTrap(ATRAP_DoVBLTask, &r2);
 					}
 
 					r->d[0] = 1;			// Flag: 68k interrupt routine executes VBLTasks etc.
@@ -314,22 +315,22 @@ void EmulOp(uint16 opcode, M68kRegisters *r)
 			// Install PutScrap() patch
 			M68kRegisters r;
 			if (PutScrapPatch) {
-				r.d[0] = 0xa9fe;
+				r.d[0] = ATRAP_PutScrap;
 				r.a[0] = PutScrapPatch;
-				Execute68kTrap(0xa647, &r);	// SetToolTrap()
+				Execute68kTrap(ATRAP_SetToolTrapAddress, &r);	// SetToolTrap()
 			}
 
 			// Install GetScrap() patch
 			if (GetScrapPatch) {
-				r.d[0] = 0xa9fd;
+				r.d[0] = ATRAP_GetScrap;
 				r.a[0] = GetScrapPatch;
-				Execute68kTrap(0xa647, &r);	// SetToolTrap()
+				Execute68kTrap(ATRAP_SetToolTrapAddress, &r);	// SetToolTrap()
 			}
 
 			// Setup fake ASC registers
 			if (ROMVersion == ROM_VERSION_32) {
 				r.d[0] = 0x1000;
-				Execute68kTrap(0xa71e, &r);		// NewPtrSysClear()
+				Execute68kTrap(ATRAP_NewPtrSysClear, &r);		// NewPtrSysClear()
 				uint32 asc_regs = r.a[0];
 				D(bug("ASC registers at %08lx\n", asc_regs));
 				WriteMacInt8(asc_regs + 0x800, 0x0f);	// Set ASC version number

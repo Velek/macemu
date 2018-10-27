@@ -621,7 +621,7 @@ BOOLEAN StartPacketDriver( LPCTSTR ServiceName )
   } else {
     SCServiceHandle = OpenService(SCManagerHandle,ServiceName,SERVICE_START);
     if (SCServiceHandle == NULL) {
-      D(bug(TEXT("Could not open service %s\r\n"),ServiceName));
+      D(bug("Could not open service %s\r\n",ServiceName));
     } else {
 			Status = StartService( SCServiceHandle, 0, NULL );
 			if(!Status) {

@@ -346,7 +346,6 @@ void ADBInterrupt(void)
 	uint32 mouse_base = adb_base + 16;
 
 	if (relative_mouse) {
-
 		// Mouse movement (relative) and buttons
 		if (mx != 0 || my != 0 || mb[0] != old_mouse_button[0] || mb[1] != old_mouse_button[1] || mb[2] != old_mouse_button[2]) {
 
@@ -376,7 +375,6 @@ void ADBInterrupt(void)
 		}
 
 	} else {
-
 		// Update mouse position (absolute)
 		if (mx != old_mouse_x || my != old_mouse_y) {
 #ifdef POWERPC_ROM

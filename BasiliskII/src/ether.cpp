@@ -53,6 +53,8 @@
 #include "ether.h"
 #include "ether_defs.h"
 
+#include <toolbox_traps.h>
+
 #ifndef NO_STD_NAMESPACE
 using std::map;
 #endif
@@ -230,7 +232,7 @@ int16 EtherOpen(uint32 pb, uint32 dce)
 	// Allocate driver data
 	M68kRegisters r;
 	r.d[0] = SIZEOF_etherdata;
-	Execute68kTrap(0xa71e, &r);		// NewPtrSysClear()
+	Execute68kTrap(ATRAP_NewPtrSysClear, &r);		// NewPtrSysClear()
 	if (r.a[0] == 0)
 		return openErr;
 	ether_data = r.a[0];
@@ -474,7 +476,7 @@ EthernetPacket::EthernetPacket()
 	else {
         M68kRegisters r;
         r.d[0] = 1516;
-        Execute68kTrap(0xa71e, &r);		// NewPtrSysClear()
+        Execute68kTrap(ATRAP_NewPtrSysClear, &r);		// NewPtrSysClear()
 		assert(r.a[0] != 0);
 		packet = r.a[0];
 		if (ether_packet == 0)
@@ -488,7 +490,7 @@ EthernetPacket::~EthernetPacket()
 	if (packet != ether_packet) {
 		M68kRegisters r;
 		r.a[0] = packet;
-		Execute68kTrap(0xa01f, &r);		// DisposePtr
+		Execute68kTrap(ATRAP_DisposePtr, &r);		// DisposePtr
 	}
 	if (n_ether_packets > 0) {
 		bug("WARNING: Nested allocation of ethernet packets!\n");

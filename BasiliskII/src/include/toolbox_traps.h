@@ -82,6 +82,7 @@
 #define ATRAP_RelString 0xA050
 #define ATRAP_ReadXPRam 0xA051
 #define ATRAP_WriteXPRam 0xA052
+#define ATRAP_ClkNoMem 0xa053
 #define ATRAP_UprString 0xA054
 #define ATRAP_StripAddress 0xA055
 #define ATRAP_LowerText 0xA056
@@ -140,8 +141,10 @@
 #define ATRAP_SysEnvirons 0xA090
 #define ATRAP_Translate24To32 0xA091
 #define ATRAP_EgretDispatch 0xA092
+#define ATRAP_Microseconds 0xa093
 #define ATRAP_PowerDispatch 0xA09F
 #define ATRAP_HeapDispatch 0xA0A4
+#define ATRAP_FSMDispatch 0xa0ac
 #define ATRAP_VADBProc 0xA0AE
 #define ATRAP_PPC 0xA0DD
 #define ATRAP_TEFindWord 0xA0FE
@@ -158,7 +161,10 @@
 #define ATRAP_MemoryDispatchA0Result 0xA15C
 #define ATRAP_PurgeSpace 0xA162
 #define ATRAP_NewEmptyHandle 0xA166
-#define ATRAP_Microseconds 0xA193
+//Hmmm.... The supplied one doesn't match the magic number
+//that was in the C++ file.
+//For now, stick with what (seems) to work
+//#define ATRAP_Microseconds 0xA193
 #define ATRAP_HWPriv 0xA198
 #define ATRAP_Gestalt 0xA1AD
 #define ATRAP_HOpen 0xA200
@@ -186,6 +192,10 @@
 #define ATRAP_NewHandleClear 0xA322
 #define ATRAP_GetOSTrapAddress 0xA346
 #define ATRAP_NewGestalt 0xA3AD
+#define ATRAP_DrvrInstallRsrvMem 0xa43d
+//The code uses two different dispatch codes
+//for this function.
+#define ATRAP_DrvrInstallRsrvMem2 0xa53d
 #define ATRAP_UpperText 0xA456
 #define ATRAP_InsXTime 0xA458
 #define ATRAP_IdleState 0xA485
@@ -238,6 +248,7 @@
 #define ATRAP_MaxSizeRsrc 0xA821
 #define ATRAP_ResourceDispatch 0xA822
 #define ATRAP_AliasDispatch 0xA823
+#define ATRAP_FSMgr 0xa824
 #define ATRAP_InsMenuItem 0xA826
 #define ATRAP_InsertMenuItem 0xA826
 #define ATRAP_HideDItem 0xA827
@@ -895,5 +906,8 @@
 #define ATRAP_StdOpcodeProc 0xABF8
 #define ATRAP_TranslationDispatch 0xABFC
 #define ATRAP_DebugStr 0xABFF
+
+#define ATRAP_HIGH(trap) (trap>>8)
+#define ATRAP_LOW(trap) (trap&0xff)
 
 #endif

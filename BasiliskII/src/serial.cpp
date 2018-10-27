@@ -38,6 +38,7 @@
 
 #include "debug.h"
 
+#include <toolbox_traps.h>
 
 // Global variables
 SERDPort *the_serd_port[2];
@@ -76,7 +77,7 @@ int16 SerialOpen(uint32 pb, uint32 dce, int port)
 		// Allocate Deferred Task structures
 		M68kRegisters r;
 		r.d[0] = SIZEOF_serdt * 2;
-		Execute68kTrap(0xa71e, &r);		// NewPtrSysClear()
+		Execute68kTrap(ATRAP_NewPtrSysClear, &r);		// NewPtrSysClear()
 		if (r.a[0] == 0) {
 			the_port->close();
 			return openErr;
@@ -214,7 +215,7 @@ int16 SerialClose(uint32 pb, uint32 dce, int port)
 			int16 res = the_port->close();
 			M68kRegisters r;				// Free Deferred Task structures
 			r.a[0] = the_port->input_dt;
-			Execute68kTrap(0xa01f, &r);		// DisposePtr()
+			Execute68kTrap(ATRAP_DisposePtr, &r);		// DisposePtr()
 			the_port->is_open = false;
 			return res;
 		} else

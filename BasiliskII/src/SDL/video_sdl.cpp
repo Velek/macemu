@@ -1294,6 +1294,7 @@ void VideoVBL(void)
 #else
 void VideoInterrupt(void)
 {
+//    D(bug("%s %d\n", __FUNCTION__, __LINE__));
 	// We must fill in the events queue in the same thread that did call SDL_SetVideoMode()
 	SDL_PumpEvents();
 
@@ -2219,7 +2220,6 @@ static int redraw_func(void *arg)
 	uint64 next = GetTicks_usec() + VIDEO_REFRESH_DELAY;
 
 	while (!redraw_thread_cancel) {
-
 		// Wait
 		next += VIDEO_REFRESH_DELAY;
 		int32 delay = int32(next - GetTicks_usec());

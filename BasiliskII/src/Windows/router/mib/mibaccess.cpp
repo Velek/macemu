@@ -88,10 +88,10 @@ MibExtLoad::MibExtLoad( LPCTSTR MibDllName, LPCTSTR SnmpDllName )
 	
 	m_hInst = LoadLibrary( MibDllName );
 	if(!m_hInst) {
-		D(bug(TEXT("MIB: library %s could not be loaded.\r\n"), MibDllName));
+		D(wbug(TEXT("MIB: library %s could not be loaded.\r\n"), MibDllName));
 		return;
 	}
-	D(bug(TEXT("MIB: library %s loaded ok.\r\n"), MibDllName));
+	D(wbug(TEXT("MIB: library %s loaded ok.\r\n"), MibDllName));
 
 	m_Init	=	(pSnmpExtensionInit)GetProcAddress(m_hInst ,"SnmpExtensionInit");
 	m_InitEx=	(pSnmpExtensionInitEx)GetProcAddress(m_hInst ,"SnmpExtensionInitEx");
@@ -100,19 +100,19 @@ MibExtLoad::MibExtLoad( LPCTSTR MibDllName, LPCTSTR SnmpDllName )
 
 	if( !m_Init || !m_InitEx || !m_Query || !m_Trap )
 	{
-		D(bug(TEXT("MIB: required entry points not found in library %s.\r\n"), MibDllName));
+		D(wbug(TEXT("MIB: required entry points not found in library %s.\r\n"), MibDllName));
 		FreeLibrary( m_hInst );
 		m_hInst = NULL;
 	}
 
 	m_hInst_snmputil = LoadLibrary( SnmpDllName );
 	if(!m_hInst_snmputil){
-		D(bug(TEXT("MIB: library %s could not be loaded.\r\n"), SnmpDllName));
+		D(wbug(TEXT("MIB: library %s could not be loaded.\r\n"), SnmpDllName));
 		FreeLibrary( m_hInst );
 		m_hInst = NULL;
 		return;
 	}
-	D(bug(TEXT("MIB: library %s loaded ok.\r\n"), SnmpDllName));
+	D(wbug(TEXT("MIB: library %s loaded ok.\r\n"), SnmpDllName));
 
 	m_SnmpUtilVarBindFree = (VOID (SNMP_FUNC_TYPE *)(SnmpVarBind *))GetProcAddress( m_hInst_snmputil, "SnmpUtilVarBindFree" );
 	m_SnmpUtilOidNCmp = (SNMPAPI (SNMP_FUNC_TYPE *)(AsnObjectIdentifier *, AsnObjectIdentifier *, UINT))GetProcAddress( m_hInst_snmputil, "SnmpUtilOidNCmp" );
@@ -120,7 +120,7 @@ MibExtLoad::MibExtLoad( LPCTSTR MibDllName, LPCTSTR SnmpDllName )
 
 	if( !m_SnmpUtilVarBindFree || !m_SnmpUtilOidNCmp || !m_SnmpUtilOidCpy )
 	{
-		D(bug(TEXT("MIB: required entry points not found in library %s.\r\n"), SnmpDllName));
+		D(wbug(TEXT("MIB: required entry points not found in library %s.\r\n"), SnmpDllName));
 		FreeLibrary( m_hInst );
 		FreeLibrary( m_hInst_snmputil );
 		m_hInst = NULL;

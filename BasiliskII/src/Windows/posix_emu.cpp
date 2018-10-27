@@ -434,7 +434,7 @@ static void charset_mac2host( LPTSTR s )
 {
 	size_t len = _tcslen(s);
 
-	D(bug(TEXT("charset_mac2host(%s)...\n"), s));
+	D(wbug(TEXT("charset_mac2host(%s)...\n"), s));
 
 	for( size_t i=len; i-->0; ) {
 		bool convert = false;
@@ -465,7 +465,7 @@ static void charset_mac2host( LPTSTR s )
 			memmove( &s[i], sml, 3 * sizeof(TCHAR) );
 		}
 	}
-	D(bug(TEXT("charset_mac2host = %s\n"), s));
+	D(wbug(TEXT("charset_mac2host = %s\n"), s));
 }
 
 static void make_mask(
@@ -537,7 +537,7 @@ static int exists( const char *p )
 		FindClose( h );
 	}
 
-	D(bug("exists(%s) = %d\n", p, result));
+	D(wbug("exists(%s) = %d\n", p, result));
 
 	return result;
 }
@@ -564,7 +564,7 @@ static int myRemoveDirectory( LPCTSTR source )
 	int ok, result = 1;
 	TCHAR mask[_MAX_PATH];
 
-	D(bug(TEXT("removing folder %s\n"), source));
+	D(wbug(TEXT("removing folder %s\n"), source));
 
 	make_mask( mask, source, TEXT("*.*"), 0 );
 
@@ -572,7 +572,7 @@ static int myRemoveDirectory( LPCTSTR source )
 	ok = fh != INVALID_HANDLE_VALUE;
 	while(ok) {
 		make_mask( mask, source, FindFileData.cFileName, 0 );
-		D(bug(TEXT("removing item %s\n"), mask));
+		D(wbug(TEXT("removing item %s\n"), mask));
 		int isdir = (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 		if(isdir) {
 			// must delete ".finf", ".rsrc" but not ".", ".."
@@ -581,7 +581,7 @@ static int myRemoveDirectory( LPCTSTR source )
 				if(!result) break;
 			}
 		} else {
-			D(bug(TEXT("DeleteFile %s\n"), mask));
+			D(wbug(TEXT("DeleteFile %s\n"), mask));
 			result = DeleteFile( mask );
 			if(!result) break;
 		}
@@ -589,7 +589,7 @@ static int myRemoveDirectory( LPCTSTR source )
 	}
 	if(fh != INVALID_HANDLE_VALUE) FindClose( fh );
 	if(result) {
-		D(bug(TEXT("RemoveDirectory %s\n"), source));
+		D(wbug(TEXT("RemoveDirectory %s\n"), source));
 		result = RemoveDirectory( source );
 	}
 	return result;
@@ -623,7 +623,7 @@ static int file_move_copy( LPCTSTR src, LPCTSTR dst, bool delete_old )
 	int result = 0;
 	my_errno = 0;
 
-	D(bug(TEXT("file_copy %s -> %s\n"), src, dst));
+	D(wbug(TEXT("file_copy %s -> %s\n"), src, dst));
 
 	// Fail if exists -- it's up to MacOS to move things to Trash
 	if(CopyFile(src,dst,TRUE)) {
@@ -658,7 +658,7 @@ static int folder_copy( LPCTSTR folder_src, LPCTSTR folder_dst )
 	int ok, result = 0;
 	TCHAR mask[_MAX_PATH];
 
-	D(bug(TEXT("copying folder %s -> \n"), folder_src, folder_dst));
+	D(wbug(TEXT("copying folder %s -> \n"), folder_src, folder_dst));
 
 	my_errno = 0;
 
@@ -676,7 +676,7 @@ static int folder_copy( LPCTSTR folder_src, LPCTSTR folder_dst )
 		int isdir = (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 		TCHAR target[_MAX_PATH];
 		make_mask( target, folder_dst, FindFileData.cFileName, 0 );
-		D(bug(TEXT("copying item %s -> %s\n"), mask, target));
+		D(wbug(TEXT("copying item %s -> %s\n"), mask, target));
 		if(isdir) {
 			if(_tcscmp(FindFileData.cFileName,TEXT(".")) && _tcscmp(FindFileData.cFileName,TEXT(".."))) {
 				result = folder_copy( mask, target );
@@ -791,7 +791,7 @@ struct DIR *opendir( const char *path )
 			TCHAR mask[MAX_PATH_LENGTH];
 			make_mask( mask, MRP(tpath.get()), TEXT("*.*"), 0 );
 
-			D(bug(TEXT("opendir path=%s, mask=%s\n"), tpath.get(), mask));
+			D(wbug(TEXT("opendir path=%s, mask=%s\n"), tpath.get(), mask));
 
 			d->h = FindFirstFile( mask, &d->FindFileData );
 			if(d->h == INVALID_HANDLE_VALUE) {
@@ -801,7 +801,7 @@ struct DIR *opendir( const char *path )
 		}
 	}
 
-	D(bug(TEXT("opendir(%s,%s) = %08x\n"), tpath.get(), MRP(tpath.get()), d));
+	D(wbug(TEXT("opendir(%s,%s) = %08x\n"), tpath.get(), MRP(tpath.get()), d));
 
 	RESTORE_ERRORS;
 
@@ -838,7 +838,7 @@ int my_stat( const char *path, struct my_stat *st )
 		}
 	}
 
-	D(bug(TEXT("stat(%s,%s) = %d\n"), tpath.get(), MRP(tpath.get()), result));
+	D(wbug(TEXT("stat(%s,%s) = %d\n"), tpath.get(), MRP(tpath.get()), result));
 	if(result >= 0) dump_stat( st );
 	RESTORE_ERRORS;
 	return result;
@@ -870,18 +870,18 @@ int my_open( const char *path, int mode, ... )
 	if(mode & _O_CREAT) {
 		if(exists(p)) {
 			result = _topen( p, mode & ~_O_CREAT );
-			D(bug(TEXT("open-nocreat(%s,%s,%d) = %d\n"), tpath.get(), p, mode, result));
+			D(wbug(TEXT("open-nocreat(%s,%s,%d) = %d\n"), tpath.get(), p, mode, result));
 		} else {
 			result = _tcreat( p, _S_IWRITE|_S_IREAD );
 			if(result < 0) {
 				make_folders(p);
 				result = _tcreat( p, _S_IWRITE|_S_IREAD );
 			}
-			D(bug(TEXT("open-creat(%s,%s,%d) = %d\n"), tpath.get(), p, mode, result));
+			D(wbug(TEXT("open-creat(%s,%s,%d) = %d\n"), tpath.get(), p, mode, result));
 		}
 	} else {
 		result = _topen( p, mode );
-		D(bug(TEXT("open(%s,%s,%d) = %d\n"), tpath.get(), p, mode, result));
+		D(wbug(TEXT("open(%s,%s,%d) = %d\n"), tpath.get(), p, mode, result));
 	}
 	if(result < 0) {
 		my_errno = errno;
@@ -933,7 +933,7 @@ int my_rename( const char *old_path, const char *new_path )
 			}
 		}
 	}
-	D(bug(TEXT("rename(%s,%s,%s,%s) = %d\n"), told_path.get(), p_old, tnew_path.get(), p_new, result));
+	D(wbug(TEXT("rename(%s,%s,%s,%s) = %d\n"), told_path.get(), p_old, tnew_path.get(), p_new, result));
 	RESTORE_ERRORS;
 	return result;
 }
@@ -978,7 +978,7 @@ int my_access( const char *path, int mode )
 		}
 	}
 
-	D(bug(TEXT("access(%s,%s,%d) = %d\n"), tpath.get(), p, mode, result));
+	D(wbug(TEXT("access(%s,%s,%d) = %d\n"), tpath.get(), p, mode, result));
 	RESTORE_ERRORS;
 	return result;
 }
@@ -999,7 +999,7 @@ int my_mkdir( const char *path, int mode )
 	} else {
 		my_errno = 0;
 	}
-	D(bug(TEXT("mkdir(%s,%s,%d) = %d\n"), tpath.get(), p, mode, result));
+	D(wbug(TEXT("mkdir(%s,%s,%d) = %d\n"), tpath.get(), p, mode, result));
 	RESTORE_ERRORS;
 	return result;
 }
@@ -1014,7 +1014,7 @@ int my_remove( const char *path )
 	if(is_dir(p)) {
 		result = myRemoveDirectory( p );
 	} else {
-		D(bug(TEXT("DeleteFile %s\n"), p));
+		D(wbug(TEXT("DeleteFile %s\n"), p));
 		result = DeleteFile( p );
 	}
 	if(result) {
@@ -1028,7 +1028,7 @@ int my_remove( const char *path )
 			my_errno = ENOENT;
 		}
 	}
-	D(bug(TEXT("remove(%s,%s) = %d\n"), tpath.get(), p, result));
+	D(wbug(TEXT("remove(%s,%s) = %d\n"), tpath.get(), p, result));
 	RESTORE_ERRORS;
 	return result;
 }
@@ -1049,7 +1049,7 @@ int my_creat( const char *path, int mode )
 		setmode(result, _O_BINARY);
 		my_errno = 0;
 	}
-	D(bug(TEXT("creat(%s,%s,%d) = %d\n"), tpath.get(), p, mode,result));
+	D(wbug(TEXT("creat(%s,%s,%d) = %d\n"), tpath.get(), p, mode,result));
 	RESTORE_ERRORS;
 	return result;
 }

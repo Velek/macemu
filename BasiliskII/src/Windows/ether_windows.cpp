@@ -713,7 +713,12 @@ static void ether_dispatch_packet(uint32 packet, uint32 length)
 
 	// Copy header to RHA
 	Mac2Mac_memcpy(ether_data + ed_RHA, packet, 14);
-	D(bug(" header %08lx%04lx %08lx%04lx %04lx\n", ReadMacInt32(ether_data + ed_RHA), ReadMacInt16(ether_data + ed_RHA + 4), ReadMacInt32(ether_data + ed_RHA + 6), ReadMacInt16(ether_data + ed_RHA + 10), ReadMacInt16(ether_data + ed_RHA + 12)));
+	D(bug(" header %08lx%04lx %08lx%04lx %04lx\n", 
+          ReadMacInt32(ether_data + ed_RHA), 
+          ReadMacInt16(ether_data + ed_RHA + 4), 
+          ReadMacInt32(ether_data + ed_RHA + 6), 
+          ReadMacInt16(ether_data + ed_RHA + 10), 
+          ReadMacInt16(ether_data + ed_RHA + 12)));
 
 	// Call protocol handler
 	M68kRegisters r;

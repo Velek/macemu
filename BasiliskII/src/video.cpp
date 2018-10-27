@@ -39,6 +39,7 @@
 
 #include "debug.h"
 
+#include <toolbox_traps.h>
 
 // Next available NuBus slot ID
 uint8 monitor_desc::next_slot_id = 0x80;
@@ -270,12 +271,12 @@ bool monitor_desc::allocate_gamma_table(int size)
 	if (size > alloc_gamma_table_size) {
 		if (gamma_table) {
 			r.a[0] = gamma_table;
-			Execute68kTrap(0xa01f, &r);	// DisposePtr()
+			Execute68kTrap(ATRAP_DisposePtr, &r);	// DisposePtr()
 			gamma_table = 0;
 			alloc_gamma_table_size = 0;
 		}
 		r.d[0] = size;
-		Execute68kTrap(0xa71e, &r);	// NewPtrSysClear()
+		Execute68kTrap(ATRAP_NewPtrSysClear, &r);	// NewPtrSysClear()
 		if (r.a[0] == 0)
 			return false;
 		gamma_table = r.a[0];
@@ -368,13 +369,13 @@ void monitor_desc::switch_mode(vector<video_mode>::const_iterator it, uint32 par
 	WriteMacInt8(slot_param + spID, ReadMacInt8(dce + dCtlSlotId));
 	WriteMacInt8(slot_param + spExtDev, 0);
 	r.d[0] = 0x0016;
-	Execute68kTrap(0xa06e, &r);	// SRsrcInfo()
+	Execute68kTrap(ATRAP_SlotManager, &r);	// SRsrcInfo()
 	uint32 rsrc = ReadMacInt32(slot_param + spPointer);
 
 	// Patch minorBase (otherwise rebooting won't work)
 	WriteMacInt8(slot_param + spID, 0x0a); // minorBase
 	r.d[0] = 0x0006;
-	Execute68kTrap(0xa06e, &r); // SFindStruct()
+	Execute68kTrap(ATRAP_SlotManager, &r);	// SRsrcInfo()
 	uint32 minor_base = ReadMacInt32(slot_param + spPointer) - ROMBaseMac;
 	ROMBaseHost[minor_base + 0] = mac_frame_base >> 24;
 	ROMBaseHost[minor_base + 1] = mac_frame_base >> 16;
@@ -385,10 +386,10 @@ void monitor_desc::switch_mode(vector<video_mode>::const_iterator it, uint32 par
 	WriteMacInt32(slot_param + spPointer, rsrc);
 	WriteMacInt8(slot_param + spID, depth_to_apple_mode(mode.depth));
 	r.d[0] = 0x0006;
-	Execute68kTrap(0xa06e, &r); // SFindStruct()
+	Execute68kTrap(ATRAP_SlotManager, &r); // SFindStruct()
 	WriteMacInt8(slot_param + spID, 0x01);
 	r.d[0] = 0x0006;
-	Execute68kTrap(0xa06e, &r); // SFindStruct()
+	Execute68kTrap(ATRAP_SlotManager, &r); // SFindStruct()
 	uint32 p = ReadMacInt32(slot_param + spPointer) - ROMBaseMac;
 	ROMBaseHost[p +  8] = mode.bytes_per_row >> 8;
 	ROMBaseHost[p +  9] = mode.bytes_per_row;
@@ -403,7 +404,7 @@ void monitor_desc::switch_mode(vector<video_mode>::const_iterator it, uint32 par
 	// Update sResource
 	WriteMacInt8(slot_param + spID, ReadMacInt8(dce + dCtlSlotId));
 	r.d[0] = 0x002b;
-	Execute68kTrap(0xa06e, &r); // SUpdateSRT()
+	Execute68kTrap(ATRAP_SlotManager, &r); // SUpdateSRT()
 
 	// Update frame buffer base in DCE and param block
 	WriteMacInt32(dce + dCtlDevBase, mac_frame_base);
@@ -451,7 +452,7 @@ int16 monitor_desc::driver_open(void)
 	// Allocate Slot Manager parameter block in Mac RAM
 	M68kRegisters r;
 	r.d[0] = SIZEOF_SPBlock;
-	Execute68kTrap(0xa71e, &r);	// NewPtrSysClear()
+	Execute68kTrap(ATRAP_NewPtrSysClear, &r);	// NewPtrSysClear()
 	if (r.a[0] == 0)
 		return memFullErr;
 	slot_param = r.a[0];
